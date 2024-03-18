@@ -14,6 +14,7 @@ import Grid from '@mui/material/Grid';
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import {Divider} from "@mui/material";
+import Button from '@mui/material/Button';
 
 export default function Company() {
     const [mode, setMode] = React.useState('light');
@@ -62,6 +63,7 @@ export default function Company() {
 
                         </Grid>
                         <Grid item xs={6} md={8}>
+                            <Typography variant="h6">Фильтры:</Typography>
 
                         </Grid>
                     </Grid>

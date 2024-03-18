@@ -13,6 +13,12 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Container from "@mui/material/Container";
+import Button from '@mui/material/Button';
+import Modal from '@mui/material/Modal';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+
+
 
 export default function TableCompanies() {
     const [mode, setMode] = React.useState('light');
@@ -20,6 +26,10 @@ export default function TableCompanies() {
     const LPtheme = createTheme(getLPTheme(mode));
     const defaultTheme = createTheme({ palette: { mode } });
     const [userData, setUserData] = useState([]);
+
+    const [selectedIndex, setSelectedIndex] = useState(null);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editedData, setEditedData] = useState({});
 
     const toggleColorMode = () => {
         setMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -31,6 +41,31 @@ export default function TableCompanies() {
             setUserData(dataFromSessionStorage);
         }
     }, []);
+
+    const handleDelete = (index) => {
+        const newData = [...userData];
+        newData.splice(index, 1);
+        setUserData(newData);
+        sessionStorage.setItem('userData', JSON.stringify(newData));
+    };
+    const handleEdit = (index) => {
+        setSelectedIndex(index);
+        setEditedData(userData[index]);
+        setEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setEditModalOpen(false);
+    };
+
+    const handleSaveEdit = () => {
+        const newData = [...userData];
+        newData[selectedIndex] = editedData;
+        setUserData(newData);
+        sessionStorage.setItem('userData', JSON.stringify(newData));
+        setEditModalOpen(false);
+    };
+
 
     return (
         <ThemeProvider theme={showCustomTheme ? LPtheme : defaultTheme}>
@@ -64,11 +99,67 @@ export default function TableCompanies() {
                                     <TableCell align="right">{row.salary}</TableCell>
                                     <TableCell align="right">{row.bonus}</TableCell>
                                     <TableCell align="right">{row.experience}</TableCell>
+                                    <TableCell align="right">
+                                        <Button onClick={() => handleEdit(index)}>Редактировать</Button>
+                                        <Button onClick={() => handleDelete(index)}>Удалить</Button>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
+                <Modal
+                    open={editModalOpen}
+                    onClose={handleCloseEditModal}
+                    aria-labelledby="edit-modal-title"
+                    aria-describedby="edit-modal-description"
+                >
+                    <Box sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        border: '2px solid #000',
+                        boxShadow: 24,
+                        p: 4,
+                    }}>
+                        <h2 id="edit-modal-title">Редактирование записи</h2>
+                        <TextField
+                            label="Специализация"
+                            value={editedData.selectedOption}
+                            onChange={(e) => setEditedData({ ...editedData, selectedOption: e.target.value })}
+                        />
+                        <TextField
+                            label="Компания"
+                            value={editedData.company}
+                            onChange={(e) => setEditedData({ ...editedData, company: e.target.value })}
+                        />
+                        <TextField
+                            label="Город"
+                            value={editedData.city}
+                            onChange={(e) => setEditedData({ ...editedData, city: e.target.value })}
+                        />
+                        <TextField
+                            label="З/п"
+                            value={editedData.salary}
+                            onChange={(e) => setEditedData({ ...editedData, salary: e.target.value })}
+                        />
+                        <TextField
+                            label="Бонус"
+                            value={editedData.bonus}
+                            onChange={(e) => setEditedData({ ...editedData, bonus: e.target.value })}
+                        />
+                        <TextField
+                            label="Опыт"
+                            value={editedData.experience}
+                            onChange={(e) => setEditedData({ ...editedData, experience: e.target.value })}
+                        />
+                        <Button onClick={handleSaveEdit}>Сохранить</Button>
+                        <Button onClick={handleCloseEditModal}>Отмена</Button>
+                    </Box>
+                </Modal>
             </Container>
 
 
