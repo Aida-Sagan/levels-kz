@@ -1,10 +1,18 @@
+import React, { useState, useEffect } from 'react';
 import Home from './pages/Home';
 import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import UserInputSalary from "./pages/UserInputSalary";
-import TableCompanies from "./pages/TableCompanies";
+import TablePopularCompanies from "./components/TablePopularCompanies";
 import Company from './pages/Company';
+import CompareCompanies from './pages/CompareCompanies';
+import Auth from './pages/Auth';
+import SignUp from './pages/SignUp';
+
 
 function App() {
+
+  const API_TOKEN = process.env.API_TOKEN;
+
 
   const router = createBrowserRouter([
     {
@@ -12,16 +20,28 @@ function App() {
       element: <Home/>
     },
     {
+      path: '/signin',
+      element: <Auth/>
+    },
+    {
+      path: '/signup',
+      element: <SignUp/>
+    },
+    {
       path: '/user-input-salary',
       element: <UserInputSalary/>
     },
     {
       path: '/table-companies',
-      element: <TableCompanies/>
+      element: <TablePopularCompanies/>
     },
     {
-      path: '/company',
-      element: <Company />
+      path: '/company/:id',
+      element: <Company/>
+    },
+    {
+      path: '/comparing-companies',
+      element: <CompareCompanies />
     }
 
   ])

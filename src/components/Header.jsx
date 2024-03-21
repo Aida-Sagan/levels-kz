@@ -11,7 +11,7 @@ import CreditScoreIcon from '@mui/icons-material/CreditScore';
 import Link from '@mui/material/Link';
 
 import ToggleColorMode from "./ToggleColorMode";
-import Search from './Search';
+import AutocompleteSearch from './Search';
 
 const logoStyle = {
     width: '90px',
@@ -103,8 +103,20 @@ export default function Header({mode, toggleColorMode}){
                                 </Typography>
                             </MenuItem>
 
-                            <Search/>
+                            <AutocompleteSearch />
 
+                            <Typography
+                                variant="body2"
+                                color="text.primary" sx={{fontFamily: ['Josefin Sans',
+                                    'sans-serif',].join(','), ml: '150px', mr: '20px'}}>
+                                <Link href="/signin">Авторизация</Link>
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                color="text.primary" sx={{fontFamily: ['Josefin Sans',
+                                    'sans-serif',].join(',')}}>
+                                <Link href="/signup">Регистрация</Link>
+                            </Typography>
                         </Box>
                     </Box>
 

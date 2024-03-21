@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -6,51 +6,84 @@ import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import Select from '@mui/material/Select';
 import Button from "@mui/material/Button";
+import axios from 'axios';
 import {useNavigate} from "react-router";
-import Alert from '@mui/material/Alert';
-import CheckIcon from '@mui/icons-material/Check';
+
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NWY4M2NhMzRlNTUzZWU3ZDcyNzg' +
+    '4MjciLCJpYXQiOjE3MTEwMjcyOTksImV4cCI6MTcxMTAzMDg5OX0.V9nNcv9xp_Tegp6bTrNF-9-R69aTXB1p9H6_KULbchw'
+
+const headers = {
+    Authorization: `Bearer ${token}`
+};
+
 
 export default function UserInputSalary() {
-    const [selectedOption, setSelectedOption] = useState('');
+    const [data, setData] = useState(null);
+    const [specialization, setSpecialization] = useState('');
     const [company, setCompany] = useState('');
-    const [city, setCity] = useState('');
+    const [location, setLocation] = useState('');
     const [salary, setSalary] = useState('');
     const [bonus, setBonus] = useState('');
     const [experience, setExperience] = useState('');
-    const [showAlert, setShowAlert] = useState(false);
 
     const navigateTo = useNavigate();
+    function fetchDataFromAPI() {
+        return Promise.all([
+            axios.get('https://onelab-levels-api.vercel.app/api/companies', { headers }),
+            axios.get('https://onelab-levels-api.vercel.app/api/specializations', { headers }),
+            axios.get('https://onelab-levels-api.vercel.app/api/locations', { headers })
+        ]).then(responses => {
+            const companies = responses[0].data;
+            const specializations = responses[1].data.map(spec => spec.name);
+            const locations = responses[2].data.map(loc => loc.name);
 
-    const options = [
-        "Frontend разработчик" ,
-        "Backend разработчик",
-        "Аналитик данных" ,
-        "Тестировщик",
-        "Системный аналитик",
-        "UI/UX дизайнер",
-    ];
+            return {
+                companies,
+                specializations,
+                locations
+            };
+        }).catch(error => {
+            console.error('Error fetching data:', error);
+            throw error;
+        });
+    }
 
-    const saveToSessionStorage = () => {
-        if (!selectedOption || !company || !city || !salary || !bonus || !experience){
-            alert('Пожалуйста, заполните все поля.');
+    useEffect(() => {
+        fetchDataFromAPI()
+            .then(data => setData(data))
+            .catch(error => console.error('Error:', error));
+    }, []);
+
+
+    const saveToBackend = () => {
+        if (!specialization || !company || !location || !salary || !bonus || !experience) {
+            alert('заполните все поля!')
             return;
-
         }
-
-        const userData = JSON.parse(sessionStorage.getItem('userData')) || [];
-        const newData = {
-            selectedOption,
-            company,
-            city,
-            salary,
-            bonus,
-            experience
+        const formData = {
+            specialization: { name: specialization },
+            location: { name: location },
+            salary: { base: parseInt(salary), bonus: parseInt(bonus) },
+            grade: experience
         };
-        userData.push(newData);
-        sessionStorage.setItem('userData', JSON.stringify(userData));
-        setShowAlert(true);
-        navigateTo('/table-companies');
+
+        axios.post('https://onelab-levels-api.vercel.app/api/salaries', formData, { headers })
+            .then(response => {
+                console.log('Data sent successfully:', response.data);
+            })
+            .catch(error => {
+                console.error('Error sending data:', error);
+            });
+
+        navigateTo('/');
     };
+
+    if (!data) {
+        return <div>
+            <h1>ПОЖАЛУЙСТА, ПОДОЖДИТЕ.</h1>
+            <h2>Данные подгружаются ...</h2>
+        </div>;
+    }
 
 
     return (
@@ -60,85 +93,79 @@ export default function UserInputSalary() {
             alignItems: 'center',
             height: '100vh',
         }}>
-            <FormControl sx={{ width: "400px",
-                p: 3,
-                borderRadius: 2,
-                boxShadow: 3,
-                bgcolor: 'background.paper'
-            }}>
-
-                <InputLabel id="demo-simple-select-filled-label" required>Выбрать профессию</InputLabel>
+            <FormControl sx={{ width: "400px", p: 3 }}>
                 <Select
-                    labelId="demo-simple-select-filled-label"
-                    id="demo-simple-select-filled"
-                    value={selectedOption}
-                    onChange={(e) => setSelectedOption(e.target.value)}
-                    label='Выбрать профессию'
+                    labelId="select-specialization-label"
+                    id="select-specialization"
+                    value={specialization}
+                    onChange={(e) => setSpecialization(e.target.value)}
+                    sx={{ mb: 2 }}
                 >
-                    {options.map((option, index) => (
-                        <MenuItem key={index} value={option}>{option}</MenuItem>
+                    {data.specializations.map((job, id) => (
+                        <MenuItem key={id} value={job}>
+                            {job}
+                        </MenuItem>
+                    ))}
+                </Select>
+
+                <Select
+                    labelId="select-company-label"
+                    id="select-company"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    sx={{ mb: 2 }}
+                >
+                    {data.companies.map((company, index) => (
+                        <MenuItem key={index} value={company.name}>
+                            {company.name}
+                        </MenuItem>
+                    ))}
+                </Select>
+
+                <Select
+                    labelId="select-city-label"
+                    id="select-city"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    sx={{ mb: 2 }}
+                >
+                    {data.locations.map((city, id) => (
+                        <MenuItem key={id} value={city}>
+                            {city}
+                        </MenuItem>
                     ))}
                 </Select>
 
                 <TextField
-                    id="outlined-basic"
-                    label="Компания"
-                    variant="outlined"
-                    sx={{ mt: '20px' }}
-                    onChange={(e) => setCompany(e.target.value)}
-                    required
-                    error={!company}
-                    helperText={!company ? 'Это поле обязательно' : ''}
-                />
-                <TextField
-                    id="outlined-basic"
-                    label="Город"
-                    variant="outlined"
-                    sx={{ mt: '20px' }}
-                    onChange={(e) => setCity(e.target.value)}
-                />
-                <TextField
-                    id="outlined-number"
-                    label="Ваша зарплата в Тенге"
+                    id="input-salary"
+                    label="Зарплата в Тенге"
                     type="number"
-                    sx={{ mt: '20px' }}
+                    value={salary}
                     onChange={(e) => setSalary(e.target.value)}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
+                    sx={{ mb: 2 }}
                 />
+
                 <TextField
-                    id="outlined-number"
-                    label="Ваши бонусы в Тенге"
+                    id="input-bonus"
+                    label="Бонусы в Тенге"
                     type="number"
-                    sx={{ mt: '20px' }}
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
+                    value={bonus}
                     onChange={(e) => setBonus(e.target.value)}
+                    sx={{ mb: 2 }}
                 />
+
                 <TextField
-                    id="outlined-basic"
-                    label="Опыт работы"
-                    variant="outlined"
-                    sx={{ mt: '20px' }}
+                    id="input-experience"
+                    label="Опыт работы (grade)"
+                    type="text"
+                    value={experience}
                     onChange={(e) => setExperience(e.target.value)}
+                    sx={{ mb: 2 }}
                 />
 
-                {showAlert && (
-                    <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
-                        Отправлено успешно
-                    </Alert>
-                )}
-                <Button variant="contained"
-                        onClick={saveToSessionStorage}
-                        sx={{
-                            mt: '40px', background: 'linear-gradient(to right bottom, #30cfd0,  #330867)',
-                            fontFamily: ['Josefin Sans', 'sans-serif'].join(','),}} >
-                    Отправить
-                </Button>
+                <Button variant="contained" sx={{ background: 'linear-gradient(to right bottom, #30cfd0, #330867)' }} onClick={saveToBackend}>Отправить</Button>
             </FormControl>
-        </Box>
 
+        </Box>
     );
 }
